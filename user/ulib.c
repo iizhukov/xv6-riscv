@@ -102,10 +102,20 @@ int
 atoi(const char *s)
 {
   int n;
+  
+  int is_neg = 0;
+  if (*s == '-') {
+    is_neg = 1;
+    s++;
+  }
 
   n = 0;
   while('0' <= *s && *s <= '9')
     n = n*10 + *s++ - '0';
+
+  if (is_neg == 1)
+    n = -n;
+
   return n;
 }
 
