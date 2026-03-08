@@ -15,11 +15,13 @@ main:
 remove_newline_symb:
     lb t1, 0(t0)
     beq t1, t2, found_newline_symb
+    beqz t1, 3f
     addi t0, t0, 1
     j remove_newline_symb
 
 found_newline_symb:
     sb zero, 0(t0)
+3:
 
     la a0, fmt_msg
     mv a1, s0
@@ -65,9 +67,11 @@ found_newline_symb:
     call exit
 
 error:
-    la a0, error_msg
-    call printf
-    
+    li a0, 2
+    la a1, error_msg
+    li a2, 6
+    call write
+
     addi sp, sp, 64
 
     li a0, 1

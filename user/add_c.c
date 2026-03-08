@@ -12,7 +12,7 @@ void read_line(char *buffer) {
         status = read(0, &symb, 1);
 
         if (status < 0) {
-            printf("ERROR\n");
+            fprintf(2, "ERROR\n");
             exit(1);
         }
         
@@ -55,8 +55,8 @@ int main(int argc, char *argv[]) {
     read_line(buffer);
     printf("|%s|\n", buffer);
 
-    if (buffer[0] == '\n') {
-        printf("EMPTY\n");
+    if (buffer[0] == '\0') {
+        fprintf(2, "EMPTY\n");
         return 1;
     }
 
@@ -64,12 +64,12 @@ int main(int argc, char *argv[]) {
     char *ptr = buffer;
 
     if (parse_num(&a, &ptr) < 0) {
-        printf("ERROR\n");
+        fprintf(2, "ERROR\n");
         return 1;
     }
 
     if (parse_num(&b, &ptr) < 0) {
-        printf("ERROR\n");
+        fprintf(2, "ERROR\n");
         return 1;
     }
 
