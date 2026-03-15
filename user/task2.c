@@ -11,35 +11,47 @@ int main(int argc, char **argv)
 
     if (pid < 0)
     {
-        printf("fork failed\n");
+        fprintf(2, "fork failed\n");
         return 1;
     } 
 
     if (pid == 0)
     {
-        close(pipefd[1]);
+        if (close(pipefd[1]) != 0)
+        {
+            fprintf(2, "close pipe write end failed\n");
+            return 1;
+        }
         close(0);
 
         if (dup(pipefd[0]) != 0)
         {
-            printf("dup failed\n");
+            fprintf(2, "dup failed\n");
             return 1;
         }
 
-        close(pipefd[0]);
+        if (close(pipefd[0]) != 0)
+        {
+            fprintf(2, "close pipe read end failed\n");
+            return 1;
+        }
 
         char *wc_argv[] = { "wc", 0 };
         int status = exec("/wc", wc_argv);
         if (status == -1)
         {
-            printf("exec failed\n");
+            fprintf(2, "exec failed\n");
             return 1;
         }
 
         return 0;
     }
 
-    close(pipefd[0]);
+    if (close(pipefd[0]) != 0)
+    {
+        fprintf(2, "close pipe read end failed\n");
+        return 1;
+    }
     for (i = 1; i < argc; i++)
     {
         char *arg = argv[i];
@@ -51,7 +63,7 @@ int main(int argc, char **argv)
             n = write(pipefd[1], arg + written, len - written);
 
             if (n < 0) {
-                printf("write failed\n");
+                fprintf(2, "write failed\n");
                 return 1;
             }
 
@@ -61,11 +73,15 @@ int main(int argc, char **argv)
         n = write(pipefd[1], "\n", 1);
 
         if (n != 1) {
-            printf("write failed\n");
+            fprintf(2, "write failed\n");
             return 1;
         }
     }
-    close(pipefd[1]);
+    if (close(pipefd[1]) != 0)
+    {
+        fprintf(2, "close pipe write end failed\n");
+        return 1;
+    }
 
     int status;
     wait(&status);

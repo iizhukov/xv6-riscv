@@ -27,7 +27,11 @@ int main(int argc, char *argv[])
     
     if (pid == 0)
     {
-        close(pipefd[1]);
+        if (close(pipefd[1]) == -1)
+        {
+            perror("close pipe write end");
+            return 1;
+        }
         
         char buffer[BUF_SIZE];
         ssize_t read_cnt;
@@ -60,11 +64,19 @@ int main(int argc, char *argv[])
             return 1;
         }
         
-        close(pipefd[0]);
+        if (close(pipefd[0]) == -1)
+        {
+            perror("close pipe read end");
+            return 1;
+        }
         return 0;
     }
 
-    close(pipefd[0]);
+    if (close(pipefd[0]) == -1)
+    {
+        perror("close pipe read end");
+        return 1;
+    }
     
     for (int i = 1; i < argc; i++)
     {
@@ -94,7 +106,11 @@ int main(int argc, char *argv[])
         }
     }
     
-    close(pipefd[1]);
+    if (close(pipefd[1]) == -1)
+    {
+        perror("close pipe write end");
+        return 1;
+    }
 
     int status;
     wait(&status);
