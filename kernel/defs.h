@@ -95,6 +95,7 @@ void            scheduler(void) __attribute__((noreturn));
 void            sched(void);
 void            sleep(void*, struct spinlock*);
 void            userinit(void);
+int             kps_listinfo(pagetable_t, uint64, int);
 int             kwait(uint64);
 void            wakeup(void*);
 void            yield(void);
