@@ -5,6 +5,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "procinfo.h"
 #include "vm.h"
 
 uint64
@@ -106,4 +107,20 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+uint64
+sys_ps_listinfo(void)
+{
+  uint64 addr;
+  int lim;
+  struct proc *p = myproc();
+
+  argaddr(0, &addr);
+  argint(1, &lim);
+
+  if (lim < 0)
+    return -1;
+
+  return kps_listinfo(p->pagetable, addr, lim);
 }

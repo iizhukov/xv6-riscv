@@ -4,6 +4,7 @@
 #include "riscv.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "procinfo.h"
 #include "defs.h"
 
 struct cpu cpus[NCPU];
@@ -687,4 +688,49 @@ procdump(void)
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
   }
+}
+
+int
+kps_listinfo(pagetable_t pagetable, uint64 uaddr, int lim)
+{
+  struct proc *p;
+  int count = 0;
+  int copied = 0;
+
+  acquire(&wait_lock);
+  for (p = proc; p < &proc[NPROC]; p++) {
+    acquire(&p->lock);
+
+    if (p->state != UNUSED) {
+      count++;
+
+      if (uaddr != 0 && copied < lim) {
+        struct procinfo pi;
+        pi.pid = p->pid;
+        safestrcpy(pi.name, p->name, sizeof(pi.name));
+
+        pi.state = (int)p->state;
+        pi.ppid = p->parent ? p->parent->pid : 0;
+        release(&p->lock);
+
+        if (copyout(
+            pagetable,
+            uaddr + copied * sizeof(pi),
+            (char *)&pi,
+            sizeof(pi)) < 0
+        ) {
+          release(&wait_lock);
+          return -1;
+        }
+        
+        copied++;
+        continue;
+      }
+    }
+
+    release(&p->lock);
+  }
+  
+  release(&wait_lock);
+  return count;
 }

@@ -2,6 +2,8 @@
 
 struct stat;
 
+#include "kernel/procinfo.h"
+
 // system calls
 int fork(void);
 int exit(int) __attribute__((noreturn));
@@ -24,6 +26,7 @@ int getpid(void);
 char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
+int ps_listinfo(struct procinfo *plist, int lim);
 
 // ulib.c
 int stat(const char*, struct stat*);
