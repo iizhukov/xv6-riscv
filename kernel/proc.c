@@ -695,50 +695,40 @@ kps_listinfo(pagetable_t pagetable, uint64 uaddr, int lim)
 {
   struct proc *p;
   int count = 0;
+  int copied = 0;
 
   acquire(&wait_lock);
   for (p = proc; p < &proc[NPROC]; p++) {
     acquire(&p->lock);
 
-    if (p->state != UNUSED)
+    if (p->state != UNUSED) {
       count++;
 
-    release(&p->lock);
-  }
+      if (uaddr != 0 && copied < lim) {
+        struct procinfo pi;
+        pi.pid = p->pid;
+        safestrcpy(pi.name, p->name, sizeof(pi.name));
 
-  if (uaddr == 0) {
-    release(&wait_lock);
-    return count;
-  }
+        pi.state = (int)p->state;
+        pi.ppid = p->parent ? p->parent->pid : 0;
+        release(&p->lock);
 
-  if (count > lim) {
-    release(&wait_lock);
-    return count;
-  }
-
-  int n = 0;
-  for (p = proc; p < &proc[NPROC]; p++) {
-    acquire(&p->lock);
-
-    if (p->state != UNUSED) {
-      struct procinfo pi;
-      pi.pid = p->pid;
-      safestrcpy(pi.name, p->name, sizeof(pi.name));
-
-      pi.state = (int)p->state;
-      pi.ppid = p->parent ? p->parent->pid : 0;
-      release(&p->lock);
-
-      if (copyout(pagetable, uaddr + n * sizeof(pi), (char *)&pi, sizeof(pi)) < 0) {
-        release(&wait_lock);
-        return -1;
+        if (copyout(
+            pagetable,
+            uaddr + copied * sizeof(pi),
+            (char *)&pi,
+            sizeof(pi)) < 0
+        ) {
+          release(&wait_lock);
+          return -1;
+        }
+        
+        copied++;
+        continue;
       }
+    }
 
-      n++;
-    }
-    else {
-      release(&p->lock);
-    }
+    release(&p->lock);
   }
   
   release(&wait_lock);
