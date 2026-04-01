@@ -23,6 +23,31 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
 
+  int fd;
+  if ((fd = open("null", O_RDWR)) < 0) {
+    mknod("null", PSEUDO, 0);
+  }
+  else
+    close(fd);
+
+  if ((fd = open("zero", O_RDONLY)) < 0) {
+    mknod("zero", PSEUDO, 1);
+  }
+  else
+    close(fd);
+
+  if ((fd = open("urandom", O_RDWR)) < 0) {
+    mknod("urandom", PSEUDO, 2);
+  }
+  else
+    close(fd);
+
+  if ((fd = open("nullstat", O_RDWR)) < 0) {
+    mknod("nullstat", PSEUDO, 3);
+  }
+  else
+    close(fd);
+
   for(;;){
     printf("init: starting sh\n");
     pid = fork();
