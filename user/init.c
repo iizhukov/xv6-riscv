@@ -23,6 +23,23 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
 
+  struct stat st;
+  if (stat("null", &st) < 0) {
+    mknod("null", PSEUDO, 0);
+  }
+
+  if (stat("zero", &st) < 0) {
+    mknod("zero", PSEUDO, 1);
+  }
+
+  if (stat("urandom", &st) < 0) {
+    mknod("urandom", PSEUDO, 2);
+  }
+
+  if (stat("nullstat", &st) < 0) {
+    mknod("nullstat", PSEUDO, 3);
+  }
+
   for(;;){
     printf("init: starting sh\n");
     pid = fork();
