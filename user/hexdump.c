@@ -31,26 +31,44 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  for (int i = 0; i < n; i++) {
-    char b;
-    int r = read(fd, &b, 1);
-    
+  char *buf = malloc(n);
+  if (buf == 0) {
+    fprintf(2, "hexdump: out of memory\n");
+    close(fd);
+    exit(1);
+  }
+
+  int total = 0;
+  while (total < n) {
+    int r = read(fd, buf + total, n - total);
     if (r < 0) {
       fprintf(2, "hexdump: read error\n");
+      free(buf);
       close(fd);
       exit(1);
     }
 
     if (r == 0)
       break;
+    total += r;
+  }
 
-    print_hex_byte((unsigned char)b);
+  if (total != n) {
+    fprintf(2, "hexdump: could not read %d bytes (got %d)\n", n, total);
+    free(buf);
+    close(fd);
+    exit(1);
+  }
+
+  for (int i = 0; i < n; i++) {
+    print_hex_byte((unsigned char)buf[i]);
     if (i + 1 < n) {
       write(1, " ", 1);
     }
   }
 
   write(1, "\n", 1);
+  free(buf);
   close(fd);
   exit(0);
 }

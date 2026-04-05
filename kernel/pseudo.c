@@ -14,6 +14,7 @@ enum {
   PSEUDO_NULLSTAT = 3,
 };
 
+static struct spinlock pseudo_lock;
 static uint64 urandom_seed = 88172645463325252ULL;
 static uint64 nullstat_written;
 
@@ -34,35 +35,64 @@ pseudoread(int minor, int user_dst, uint64 dst, int n)
     return 0;
   }
   else if (minor == PSEUDO_ZERO) {
-    char z = 0;
+    char buf[256];
+    int bufsize = sizeof(buf);
+    memset(buf, 0, bufsize);
 
-    for (int i = 0; i < n; i++) {
-      if (either_copyout(user_dst, dst + i, &z, 1) < 0)
+    int total = 0;
+    while (total < n) {
+      int chunk = n - total;
+      if (chunk > bufsize)
+        chunk = bufsize;
+
+      if (either_copyout(user_dst, dst + total, buf, chunk) < 0)
         return -1;
+
+      total += chunk;
     }
 
     return n;
   }
   else if (minor == PSEUDO_URANDOM) {
-    for (int i = 0; i < n; i++) {
-      uint64 x = lcg_next();
-      char b = (char)(x & 0xFF);
+    char buf[256];
+    int bufsize = sizeof(buf);
+    int total = 0;
 
-      if (either_copyout(user_dst, dst + i, &b, 1) < 0)
+    acquire(&pseudo_lock);
+    while (total < n) {
+      int chunk = n - total;
+      if (chunk > bufsize)
+        chunk = bufsize;
+
+      for (int i = 0; i < chunk; i++) {
+        uint64 x = lcg_next();
+        buf[i] = (char)(x & 0xFF);
+      }
+
+      release(&pseudo_lock);
+      if (either_copyout(user_dst, dst + total, buf, chunk) < 0)
         return -1;
+      acquire(&pseudo_lock);
+
+      total += chunk;
     }
+    release(&pseudo_lock);
 
     return n;
-
   }
   else if (minor == PSEUDO_NULLSTAT) {
     if (n != (int)sizeof(nullstat_written))
       return -1;
 
-    if (either_copyout(user_dst, dst, &nullstat_written, sizeof(nullstat_written)) < 0)
+    uint64 val;
+    acquire(&pseudo_lock);
+    val = nullstat_written;
+    release(&pseudo_lock);
+
+    if (either_copyout(user_dst, dst, &val, sizeof(val)) < 0)
       return -1;
 
-    return sizeof(nullstat_written);
+    return sizeof(val);
   }
 
   return -1;
@@ -84,13 +114,20 @@ pseudowrite(int minor, int user_src, uint64 src, int n)
     if (n != (int)sizeof(urandom_seed))
       return -1;
 
-    if (either_copyin(&urandom_seed, user_src, src, sizeof(urandom_seed)) < 0)
+    uint64 newseed;
+    if (either_copyin(&newseed, user_src, src, sizeof(newseed)) < 0)
       return -1;
+
+    acquire(&pseudo_lock);
+    urandom_seed = newseed;
+    release(&pseudo_lock);
 
     return sizeof(urandom_seed);
   }
   else if (minor == PSEUDO_NULLSTAT) {
+    acquire(&pseudo_lock);
     nullstat_written += (uint64)n;
+    release(&pseudo_lock);
     return n;
   }
 
@@ -100,6 +137,7 @@ pseudowrite(int minor, int user_src, uint64 src, int n)
 void
 pseudoinit(void)
 {
+  initlock(&pseudo_lock, "pseudo");
   devsw[PSEUDO].read = pseudoread;
   devsw[PSEUDO].write = pseudowrite;
 }
