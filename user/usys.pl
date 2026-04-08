@@ -42,3 +42,6 @@ entry("getpid");
 entry("sbrk");
 entry("pause");
 entry("uptime");
+entry("pagetable_print");
+entry("page_flags_clear");
+entry("page_flags_check");
