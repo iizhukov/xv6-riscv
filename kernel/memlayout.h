@@ -21,6 +21,10 @@
 #define UART0 0x10000000L
 #define UART0_IRQ 10
 
+#define RTC0 0x101000L
+#define RTC_LOW (RTC0 + 0x0)
+#define RTC_HIGH (RTC0 + 0x4)
+
 // virtio mmio interface
 #define VIRTIO0 0x10001000
 #define VIRTIO0_IRQ 1
