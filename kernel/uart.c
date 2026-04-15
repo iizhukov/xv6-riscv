@@ -159,3 +159,15 @@ uartintr(void)
     consoleintr(c);
   }
 }
+
+uint64
+rtcread(void)
+{
+  volatile uint32 *rtc_low = (volatile uint32 *)(RTC_LOW);
+  volatile uint32 *rtc_high = (volatile uint32 *)(RTC_HIGH);
+  
+  uint32 low = *rtc_low;
+  uint32 high = *rtc_high;
+  
+  return ((uint64)high << 32) | low;
+}

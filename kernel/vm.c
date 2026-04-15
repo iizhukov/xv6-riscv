@@ -27,9 +27,7 @@ kvmmake(void)
   memset(kpgtbl, 0, PGSIZE);
 
   // uart registers
-  kvmmap(kpgtbl, UART0, UART0, PGSIZE, PTE_R | PTE_W);
-
-  // virtio mmio disk interface
+  kvmmap(kpgtbl, UART0, UART0, PGSIZE, PTE_R | PTE_W);  // virtio mmio disk interface
   kvmmap(kpgtbl, VIRTIO0, VIRTIO0, PGSIZE, PTE_R | PTE_W);
 
   // PLIC
@@ -44,6 +42,8 @@ kvmmake(void)
   // map the trampoline for trap entry/exit to
   // the highest virtual address in the kernel.
   kvmmap(kpgtbl, TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
+
+  kvmmap(kpgtbl, RTC0, RTC0, PGSIZE, PTE_R);
 
   // allocate and map a kernel stack for each process.
   proc_mapstacks(kpgtbl);

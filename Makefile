@@ -145,6 +145,7 @@ UPROGS=\
 	$U/_logstress\
 	$U/_forphan\
 	$U/_dorphan\
+	$U/_date\
 
 fs.img: mkfs/mkfs README $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
@@ -169,8 +170,17 @@ ifndef CPUS
 CPUS := 3
 endif
 
+RTC_MODE ?= 0
+
 QEMUOPTS = -machine virt -bios none -kernel $K/kernel -m 128M -smp $(CPUS) -nographic
 QEMUOPTS += -global virtio-mmio.force-legacy=false
+
+ifeq ($(RTC_MODE),0)
+QEMUOPTS += -rtc base=localtime
+else
+QEMUOPTS += -rtc base=1970-01-01T00:00:00
+endif
+
 QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
 QEMUOPTS += -device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
