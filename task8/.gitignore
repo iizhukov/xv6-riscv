@@ -1,0 +1,6 @@
+*
+
+!logserver.c
+!Makefile
+!test_logserver.py
+!.gitignore
