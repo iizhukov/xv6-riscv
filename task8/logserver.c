@@ -217,12 +217,23 @@ static int read_loop(int fd)
         if (handle_eintr_flags()) {
             if (got_sigint) {
                 ssize_t m;
-                while ((m = read(fd, buf, READ_BUF_SIZE)) > 0) {
-                    buf[m] = '\0';
-                    last_char = buf[m - 1];
-                    fputs(buf, stdout);
-                    fflush(stdout);
-                    stat_bytes += (unsigned long)m;
+                while (1) {
+                    m = read(fd, buf, READ_BUF_SIZE);
+                    if (m > 0) {
+                        buf[m] = '\0';
+                        last_char = buf[m - 1];
+                        fputs(buf, stdout);
+                        fflush(stdout);
+                        stat_bytes += (unsigned long)m;
+                        continue;
+                    }
+                    if (m == 0) break;
+                    if (errno == EINTR) {
+                        if (flag_sigterm) break;
+                        handle_eintr_flags();
+                        continue;
+                    }
+                    break;
                 }
             }
             if (last_char != '\n') { putchar('\n'); fflush(stdout); }
@@ -237,6 +248,8 @@ static void run(void)
     int stop = 0;
 
     while (!stop) {
+        if (handle_eintr_flags()) break;
+
         int fd = -1;
         while (fd < 0) {
             fd = open(fifo_path, O_RDONLY);
@@ -259,7 +272,7 @@ static void run(void)
 
         logmsg("[инфо] FIFO закрыт (EOF)");
 
-        if (flag_sigterm || flag_sigint) break;
+        if (handle_eintr_flags()) break;
     }
 
     alarm(0);
