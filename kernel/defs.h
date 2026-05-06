@@ -9,6 +9,12 @@ struct sleeplock;
 struct stat;
 struct superblock;
 
+void            logbufinit(void);
+void            pr_msg(const char*, ...) __attribute__ ((format (printf, 1, 2)));
+int             dmesg_copy(pagetable_t, uint64, int);
+int             log_enabled(int);
+int             logctl_set(int, int);
+
 // bio.c
 void            binit(void);
 struct buf*     bread(uint, uint);

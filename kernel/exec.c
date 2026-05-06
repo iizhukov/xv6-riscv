@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "defs.h"
 #include "elf.h"
+#include "log.h"
 
 static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
 
@@ -34,6 +35,9 @@ kexec(char *path, char **argv)
   struct proghdr ph;
   pagetable_t pagetable = 0, oldpagetable;
   struct proc *p = myproc();
+
+  if (log_enabled(LOG_EXEC))
+    pr_msg("exec: pid=%d path=%s", myproc()->pid, path);
 
   begin_op();
 
