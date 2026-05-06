@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "log.h"
 
 struct spinlock tickslock;
 uint ticks;
@@ -195,8 +196,12 @@ devintr()
 
     if(irq == UART0_IRQ){
       uartintr();
+      if (log_enabled(LOG_INTR))
+        pr_msg("intr: irq=%d dev=uart", irq);
     } else if(irq == VIRTIO0_IRQ){
       virtio_disk_intr();
+      if (log_enabled(LOG_INTR))
+        pr_msg("intr: irq=%d dev=virtio", irq);
     } else if(irq){
       printf("unexpected interrupt irq=%d\n", irq);
     }

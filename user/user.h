@@ -24,6 +24,8 @@ int getpid(void);
 char* sys_sbrk(int,int);
 int pause(int);
 int uptime(void);
+int dmesg(char*, int);
+int logctl(int, int);
 
 // ulib.c
 int stat(const char*, struct stat*);
